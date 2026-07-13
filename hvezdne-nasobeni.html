@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚀 Raketa k planetě – násobení 🪐</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Comic Sans MS", "Segoe UI", Verdana, sans-serif;
+    background: linear-gradient(180deg, #0b1026 0%, #1b1f4a 45%, #3b2f6b 100%);
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* hvězdičky v pozadí */
+  .starbg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+      radial-gradient(2px 2px at 70% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 40% 70%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 85% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 10% 80%, #fff, transparent),
+      radial-gradient(2px 2px at 55% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 90%, #fff, transparent);
+    opacity: .6;
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    display: flex;
+    height: 100vh;
+  }
+
+  /* ---- levá část: hra ---- */
+  .game {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 18px;
+  }
+  h1 {
+    font-size: 1.8em;
+    margin: 0;
+    text-align: center;
+    text-shadow: 2px 2px 0 #7c3aed;
+  }
+  #countWrap {
+    width: 320px; max-width: 80vw;
+    height: 16px;
+    background: rgba(255,255,255,.15);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #countBar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg,#34d399,#fbbf24,#ef4444);
+    transition: width .25s linear;
+  }
+  #example {
+    font-size: 4em;
+    font-weight: bold;
+    text-shadow: 0 3px 12px rgba(0,0,0,.4);
+    min-height: 1.2em;
+    text-align: center;
+  }
+  #answer {
+    font-size: 2.4em;
+    font-family: inherit;
+    text-align: center;
+    width: 220px;
+    max-width: 70vw;
+    padding: 8px 12px;
+    border-radius: 16px;
+    border: 4px solid #a78bfa;
+    outline: none;
+    background: #fff;
+    color: #1e293b;
+  }
+  #answer:focus { border-color: #34d399; box-shadow: 0 0 0 5px rgba(52,211,153,.3); }
+  #answer.shake { animation: shake .35s; border-color:#ef4444; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)}
+    40%{transform:translateX(10px)} 60%{transform:translateX(-8px)} 80%{transform:translateX(8px)}
+  }
+  .stats { display:flex; gap:26px; font-size:1.2em; }
+  .stats b { color:#fbbf24; }
+  #diff { text-align:center; }
+  #diff .lbl { font-size:1em; opacity:.85; margin-bottom:8px; }
+  .diffBtns { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .diffBtn {
+    font-family: inherit; font-size: .95em; font-weight: bold;
+    padding: 8px 12px; border-radius: 12px; cursor: pointer;
+    color:#fff; border: 3px solid transparent;
+    background: rgba(255,255,255,.12);
+    transition: all .15s;
+  }
+  .diffBtn:hover { background: rgba(255,255,255,.22); }
+  .diffBtn.sel { border-color:#fbbf24; background: rgba(251,191,36,.25); transform: scale(1.05); }
+  .diffBtn.locked { opacity:.4; cursor: not-allowed; }
+  #startBtn {
+    font-family: inherit; font-size: 1.4em; font-weight: bold;
+    padding: 14px 36px; border: none; border-radius: 16px; cursor: pointer;
+    color:#fff; background: linear-gradient(#34d399,#059669);
+    box-shadow: 0 6px 0 rgba(0,0,0,.3);
+  }
+  #startBtn:active { transform: translateY(3px); box-shadow:0 3px 0 rgba(0,0,0,.3); }
+  #msg { font-size:1.4em; text-align:center; min-height:1.4em; font-weight:bold; }
+
+  /* ---- pravá část: rampa s raketou ---- */
+  .launchpad {
+    position: relative;
+    width: 200px;
+    border-left: 3px dashed rgba(255,255,255,.25);
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(255,255,255,.05) 100%);
+  }
+  #planet {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    font-size: 70px;
+    filter: drop-shadow(0 0 14px rgba(255,200,120,.7));
+  }
+  .ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+    background: linear-gradient(180deg, #4b3a2a, #6b4f37);
+    border-top: 4px solid #8b6f47;
+  }
+  .ramp {
+    position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%);
+    font-size: 30px;
+  }
+  /* trasa rakety: 0% dole nad rampou, 100% u planety */
+  #rocketZone {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 70px;   /* 0% pozice */
+    top: 90px;      /* 100% pozice */
+  }
+  #rocket {
+    position: absolute;
+    left: 50%;
+    bottom: 0%;
+    transform: translateX(-50%) rotate(-45deg);
+    font-size: 52px;
+    transition: bottom .15s linear;
+  }
+  /* ukazatel procent */
+  #pct {
+    position:absolute; top:50%; right:8px; transform:translateY(-50%) rotate(0deg);
+    font-size:1.1em; color:#fbbf24; font-weight:bold;
+    text-shadow:0 1px 3px #000;
+  }
+
+  .confetti {
+    position: fixed; top:-20px; font-size:24px; pointer-events:none;
+    animation: fall linear forwards; z-index:50;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity:.9; } }
+</style>
+</head>
+<body>
+<div class="starbg"></div>
+<div class="wrap">
+  <div class="game">
+    <h1>🚀 Dolet raketou k planetě! 🪐</h1>
+    <div id="example">Připraven?</div>
+    <input id="answer" type="number" inputmode="numeric" autocomplete="off" disabled>
+    <div class="stats">
+      <span>⏱️ Čas: <b id="time">0,0 s</b></span>
+      <span>📈 Výška: <b id="height">0</b>%</span>
+    </div>
+    <div id="msg"></div>
+    <div id="diff">
+      <div class="lbl">Obtížnost:</div>
+      <div class="diffBtns" id="diffBtns"></div>
+    </div>
+    <button id="startBtn">▶️ START</button>
+  </div>
+
+  <div class="launchpad">
+    <div id="planet">🪐</div>
+    <div id="pct">0%</div>
+    <div id="rocketZone">
+      <div id="rocket">🚀</div>
+    </div>
+    <div class="ramp">🗼</div>
+    <div class="ground"></div>
+  </div>
+</div>
+
+<script>
+const DIFFICULTIES = [
+  { name: '🎈 Balónek',          drop: 0.5 },
+  { name: '🧑‍🚀 Kadet',      drop: 1.0 },
+  { name: '🚀 Pilot',            drop: 1.5 },
+  { name: '☄️ Velitel',          drop: 2.25 },
+  { name: '👽 Hvězdný kapitán',  drop: 3.0 },
+];
+let diffIndex = 2;        // výchozí: Pilot
+let DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;  // % dolů každou sekundu
+const UP_CORRECT = 15;    // % nahoru za správně
+const DOWN_WRONG = 10;    // % dolů za špatně
+const START_POS = 12;     // startovní výška po odpálení
+
+const exampleEl = document.getElementById('example');
+const answerEl  = document.getElementById('answer');
+const timeEl    = document.getElementById('time');
+const heightEl  = document.getElementById('height');
+const msgEl     = document.getElementById('msg');
+const startBtn  = document.getElementById('startBtn');
+const rocketEl  = document.getElementById('rocket');
+const pctEl     = document.getElementById('pct');
+const diffBtns  = document.getElementById('diffBtns');
+
+let pos = 0;          // % výška 0..100
+let elapsed = 0;      // celkový čas hry v desetinách sekundy
+let curAnswer = 0;
+let tickId = null;
+let playing = false;
+
+function fmtTime(tenths){
+  return (tenths / 10).toFixed(1).replace('.', ',') + ' s';
+}
+
+function rnd(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function renderDiff(){
+  diffBtns.innerHTML = '';
+  DIFFICULTIES.forEach((d, i) => {
+    const b = document.createElement('button');
+    b.className = 'diffBtn' + (i===diffIndex ? ' sel' : '') + (playing ? ' locked' : '');
+    b.textContent = d.name;
+    b.disabled = playing;
+    b.addEventListener('click', () => {
+      if (playing) return;
+      diffIndex = i;
+      DROP_PER_SEC = d.drop;
+      renderDiff();
+    });
+    diffBtns.appendChild(b);
+  });
+}
+renderDiff();
+
+function setPos(p){
+  pos = Math.max(-1, Math.min(100, p));
+  const shown = Math.max(0, Math.round(pos));
+  rocketEl.style.bottom = Math.max(0, pos) + '%';
+  heightEl.textContent = shown;
+  pctEl.textContent = shown + '%';
+}
+
+function newExample(){
+  const a = rnd(2,9);
+  const b = rnd(10,20);
+  const [x,y] = Math.random()<0.5 ? [a,b] : [b,a];
+  curAnswer = x*y;
+  exampleEl.textContent = x + ' × ' + y;
+  answerEl.value = '';
+  answerEl.focus();
+}
+
+function startGame(){
+  playing = true;
+  elapsed = 0; timeEl.textContent = fmtTime(0);
+  msgEl.textContent = '';
+  startBtn.style.display = 'none';
+  answerEl.disabled = false;
+  renderDiff();   // zamknout přepínání obtížnosti
+  setPos(START_POS);           // odpálení z rampy
+  newExample();
+  if (tickId) clearInterval(tickId);
+  tickId = setInterval(tick, 100);   // 10× za sekundu
+}
+
+function tick(){
+  if (!playing) return;
+  // čas běží
+  elapsed++;
+  timeEl.textContent = fmtTime(elapsed);
+  // raketa klesá plynule (DROP_PER_SEC % za sekundu)
+  setPos(pos - DROP_PER_SEC / 10);
+  checkEnd();
+}
+
+function submit(){
+  if (!playing) return;
+  const val = answerEl.value.trim();
+  if (val === '') return;
+  if (parseInt(val,10) === curAnswer){
+    setPos(pos + UP_CORRECT);
+    flash('🚀 +' + UP_CORRECT + '%', '#34d399');
+    if (checkEnd()) return;
+    newExample();
+  } else {
+    setPos(pos - DOWN_WRONG);
+    flash('💥 Špatně! -' + DOWN_WRONG + '%', '#ef4444');
+    answerEl.classList.remove('shake'); void answerEl.offsetWidth;
+    answerEl.classList.add('shake');
+    answerEl.select();
+    checkEnd();   // příklad zůstává
+  }
+}
+
+function flash(text, color){
+  msgEl.textContent = text;
+  msgEl.style.color = color;
+}
+
+function checkEnd(){
+  if (pos >= 100){ win(); return true; }
+  if (pos <= 0){ boom(); return true; }
+  return false;
+}
+
+function stop(){
+  playing = false;
+  clearInterval(tickId);
+  answerEl.disabled = true;
+  startBtn.style.display = '';
+  renderDiff();   // znovu povolit přepínání obtížnosti
+}
+
+function win(){
+  stop();
+  setPos(100);
+  rocketEl.textContent = '🚀';
+  exampleEl.textContent = '🌟 BINGO! 🌟';
+  msgEl.style.color = '#34d399';
+  msgEl.textContent = 'Dolétl jsi k planetě! Skvělá práce! 🎉 Tvůj čas: ' + fmtTime(elapsed);
+  startBtn.textContent = '▶️ Hrát znovu';
+  celebrate();
+}
+
+function boom(){
+  stop();
+  rocketEl.textContent = '💥';
+  exampleEl.textContent = '💥 BUM! 💥';
+  msgEl.style.color = '#ef4444';
+  msgEl.textContent = 'Raketa spadla na zem a vybuchla. Zkus to znovu! 🚀';
+  startBtn.textContent = '▶️ Zkusit znovu';
+  setTimeout(()=>{ rocketEl.textContent = '🚀'; }, 1500);
+}
+
+function celebrate(){
+  const e = ['🎉','⭐','🚀','🌟','🎊','💫','🪐','✨'];
+  for (let i=0;i<70;i++){
+    const c=document.createElement('div');
+    c.className='confetti'; c.textContent=e[Math.floor(Math.random()*e.length)];
+    c.style.left=Math.random()*100+'vw';
+    c.style.animationDuration=(2+Math.random()*2)+'s';
+    c.style.animationDelay=(Math.random()*0.6)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4500);
+  }
+}
+
+answerEl.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+startBtn.addEventListener('click', startGame);
+
+// ovládání klávesnicí před startem: šipky = obtížnost, Enter = start
+document.addEventListener('keydown', e=>{
+  if (playing) return;
+  if (e.target === answerEl) return;  // Enter z políčka odpovědi neřešíme (ukončil hru)
+  if (e.key === 'ArrowLeft'){
+    diffIndex = (diffIndex - 1 + DIFFICULTIES.length) % DIFFICULTIES.length;
+    DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;
+    renderDiff();
+    e.preventDefault();
+  } else if (e.key === 'ArrowRight'){
+    diffIndex = (diffIndex + 1) % DIFFICULTIES.length;
+    DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;
+    renderDiff();
+    e.preventDefault();
+  } else if (e.key === 'Enter'){
+    startGame();
+    e.preventDefault();
+  }
+});
+</script>
+</body>
+</html>

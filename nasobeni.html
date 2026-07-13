@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚀 Radovanovo násobení 🚀</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Comic Sans MS", "Segoe UI", Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #6ee7f9 0%, #a78bfa 50%, #f9a8d4 100%);
+    min-height: 100vh;
+    color: #1e293b;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2.4em;
+    margin: 10px 0 4px;
+    color: #fff;
+    text-shadow: 2px 2px 0 #7c3aed, 4px 4px 0 rgba(0,0,0,.15);
+  }
+  .sub {
+    text-align: center;
+    color: #fff;
+    font-size: 1.05em;
+    margin-bottom: 14px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,.15);
+  }
+
+  /* raketa + cesta */
+  #rocketTrack {
+    position: relative;
+    height: 60px;
+    margin: 0 auto 10px;
+    max-width: 920px;
+    background: rgba(255,255,255,.35);
+    border-radius: 30px;
+    overflow: hidden;
+    border: 3px dashed #fff;
+  }
+  #rocket {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    font-size: 38px;
+    transition: left .8s cubic-bezier(.34,1.56,.64,1);
+  }
+  #moon {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 34px;
+  }
+
+  .panel {
+    max-width: 920px;
+    margin: 0 auto;
+    background: rgba(255,255,255,.92);
+    border-radius: 20px;
+    padding: 18px 20px 26px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.2);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+    gap: 10px;
+  }
+  .ex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 1.25em;
+    border: 3px solid transparent;
+    transition: all .2s;
+  }
+  .ex .num { color: #64748b; font-weight: bold; min-width: 26px; }
+  .ex .q { font-weight: bold; white-space: nowrap; }
+  .ex input {
+    width: 64px;
+    font-size: 1em;
+    font-family: inherit;
+    text-align: center;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+  }
+  .ex input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,.2); }
+
+  .ex.correct { background: #dcfce7; border-color: #22c55e; }
+  .ex.wrong   { background: #fee2e2; border-color: #ef4444; }
+  .mark { font-size: 1.2em; margin-left: auto; }
+  .ex .solution { color: #16a34a; font-weight: bold; margin-left: 4px; }
+
+  .buttons {
+    text-align: center;
+    margin: 18px 0 6px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    color: #fff;
+    box-shadow: 0 5px 0 rgba(0,0,0,.2);
+    transition: transform .1s, box-shadow .1s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  #checkBtn { background: linear-gradient(#34d399, #059669); }
+  #newBtn   { background: linear-gradient(#60a5fa, #2563eb); }
+
+  #result {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    min-height: 1.6em;
+    margin-top: 10px;
+  }
+  #stars { font-size: 1.8em; text-align: center; min-height: 1.2em; }
+
+  /* konfety */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    font-size: 22px;
+    pointer-events: none;
+    animation: fall linear forwards;
+    z-index: 999;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: .9; }
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .wiggle { animation: wiggle .4s ease-in-out 3; }
+</style>
+</head>
+<body>
+  <h1 class="wiggle">🚀 Radovanovo vesmírné násobení 🌟</h1>
+  <div class="sub">Spočítej příklady správně a dolet s raketou až na Měsíc! 🌙</div>
+
+  <div id="rocketTrack">
+    <div id="rocket">🚀</div>
+    <div id="moon">🌙</div>
+  </div>
+
+  <div class="panel">
+    <div id="grid" class="grid"></div>
+
+    <div class="buttons">
+      <button id="checkBtn">✅ Kontrola</button>
+      <button id="newBtn">🎲 Nové</button>
+    </div>
+
+    <div id="result"></div>
+    <div id="stars"></div>
+  </div>
+
+<script>
+const COUNT = 25;
+const grid = document.getElementById('grid');
+const rocket = document.getElementById('rocket');
+const track = document.getElementById('rocketTrack');
+const resultEl = document.getElementById('result');
+const starsEl = document.getElementById('stars');
+
+let exercises = [];
+
+function rnd(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generate() {
+  exercises = [];
+  grid.innerHTML = '';
+  resultEl.textContent = '';
+  starsEl.textContent = '';
+  moveRocket(0);
+
+  for (let i = 0; i < COUNT; i++) {
+    // jednociferné (2-9) krát dvouciferné do 20 (10-20)
+    const a = rnd(2, 9);
+    const b = rnd(10, 20);
+    // náhodně prohodíme pořadí, ať je to pestřejší
+    const [x, y] = Math.random() < 0.5 ? [a, b] : [b, a];
+    const answer = x * y;
+    exercises.push(answer);
+
+    const div = document.createElement('div');
+    div.className = 'ex';
+    div.innerHTML =
+      '<span class="q">' + x + ' × ' + y + ' =</span>' +
+      '<input type="number" inputmode="numeric" data-idx="' + i + '">' +
+      '<span class="mark"></span>';
+    grid.appendChild(div);
+  }
+}
+
+function check() {
+  const inputs = grid.querySelectorAll('input');
+  let correct = 0;
+  let filled = 0;
+
+  inputs.forEach((inp, i) => {
+    const ex = inp.closest('.ex');
+    ex.classList.remove('correct', 'wrong');
+    const mark = ex.querySelector('.mark');
+    const oldSol = ex.querySelector('.solution');
+    if (oldSol) oldSol.remove();
+
+    const val = inp.value.trim();
+    if (val === '') {
+      mark.textContent = '';
+      return;
+    }
+    filled++;
+
+    if (parseInt(val, 10) === exercises[i]) {
+      ex.classList.add('correct');
+      mark.textContent = '✅';
+      correct++;
+    } else {
+      ex.classList.add('wrong');
+      mark.textContent = '❌';
+      const sol = document.createElement('span');
+      sol.className = 'solution';
+      sol.textContent = '(' + exercises[i] + ')';
+      ex.appendChild(sol);
+    }
+  });
+
+  const errors = filled - correct;
+
+  // raketa letí podle počtu správných
+  const ratio = correct / COUNT;
+  moveRocket(ratio);
+
+  if (filled === 0) {
+    resultEl.style.color = '#7c3aed';
+    resultEl.textContent = '✍️ Nejdřív něco vyplň, kosmonaute!';
+    starsEl.textContent = '';
+    return;
+  }
+
+  if (errors === 0 && filled === COUNT) {
+    resultEl.style.color = '#059669';
+    resultEl.textContent = '🎉 PARÁDA! Všech 25 správně! Jsi na Měsíci! 🌙🚀';
+    starsEl.textContent = '⭐⭐⭐⭐⭐';
+    celebrate();
+    document.querySelector('h1').classList.remove('wiggle');
+    void document.querySelector('h1').offsetWidth;
+    document.querySelector('h1').classList.add('wiggle');
+  } else {
+    resultEl.style.color = errors === 0 ? '#059669' : '#dc2626';
+    let msg = 'Správně: ' + correct + ' / ' + COUNT + '  •  Chyby: ' + errors;
+    resultEl.textContent = msg;
+
+    // hvězdičky podle úspěšnosti
+    const stars = Math.round(ratio * 5);
+    starsEl.textContent = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+
+    if (errors === 0) {
+      resultEl.textContent += '  — zkus doplnit zbytek! 💪';
+    }
+  }
+}
+
+function moveRocket(ratio) {
+  const maxLeft = track.clientWidth - 60;
+  rocket.style.left = Math.max(0, Math.min(maxLeft, maxLeft * ratio)) + 'px';
+}
+
+function celebrate() {
+  const emojis = ['🎉','⭐','🚀','🌟','🎊','💫','🪐','✨'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * 0.6) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4500);
+  }
+}
+
+document.getElementById('checkBtn').addEventListener('click', check);
+document.getElementById('newBtn').addEventListener('click', generate);
+
+// Enter v posledním políčku spustí kontrolu; jinak skok na další
+grid.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const inputs = [...grid.querySelectorAll('input')];
+  const idx = inputs.indexOf(e.target);
+  if (idx > -1 && idx < inputs.length - 1) {
+    inputs[idx + 1].focus();
+  } else {
+    check();
+  }
+});
+
+window.addEventListener('resize', () => moveRocket(0));
+generate();
+</script>
+</body>
+</html>
