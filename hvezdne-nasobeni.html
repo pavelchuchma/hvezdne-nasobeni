@@ -3,18 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚀 Raketa k planetě – násobení 🪐</title>
+<title>🚀🥥 Násobilkové hry</title>
 <style>
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
     font-family: "Comic Sans MS", "Segoe UI", Verdana, sans-serif;
-    background: linear-gradient(180deg, #0b1026 0%, #1b1f4a 45%, #3b2f6b 100%);
+    background: var(--bg);
     color: #fff;
     overflow: hidden;
   }
 
-  /* hvězdičky v pozadí */
+  body.theme-space {
+    --bg: linear-gradient(180deg, #0b1026 0%, #1b1f4a 45%, #3b2f6b 100%);
+    --accent: #7c3aed;
+    --accent2: #a78bfa;
+    --panelBorder: rgba(255,255,255,.25);
+    --groundGrad: linear-gradient(180deg, #4b3a2a, #6b4f37);
+    --groundBorder: #8b6f47;
+  }
+  body.theme-coconut {
+    --bg: linear-gradient(180deg, #0f3a42 0%, #164a38 50%, #2a3d1c 100%);
+    --accent: #34d399;
+    --accent2: #4ade80;
+    --panelBorder: rgba(255,255,255,.3);
+    --groundGrad: linear-gradient(180deg, #b8934f, #8a6a34);
+    --groundBorder: #6b4f25;
+  }
+
+  /* hvězdičky v pozadí (jen vesmírné téma) */
   .starbg {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background-image:
@@ -27,6 +44,7 @@
       radial-gradient(1px 1px at 90% 90%, #fff, transparent);
     opacity: .6;
   }
+  body.theme-coconut .starbg { display: none; }
 
   .wrap {
     position: relative; z-index: 1;
@@ -48,7 +66,7 @@
     font-size: 1.8em;
     margin: 0;
     text-align: center;
-    text-shadow: 2px 2px 0 #7c3aed;
+    text-shadow: 2px 2px 0 var(--accent);
   }
   #countWrap {
     width: 320px; max-width: 80vw;
@@ -78,7 +96,7 @@
     max-width: 70vw;
     padding: 8px 12px;
     border-radius: 16px;
-    border: 4px solid #a78bfa;
+    border: 4px solid var(--accent2);
     outline: none;
     background: #fff;
     color: #1e293b;
@@ -91,8 +109,8 @@
   }
   .stats { display:flex; gap:26px; font-size:1.2em; }
   .stats b { color:#fbbf24; }
-  #diff { text-align:center; }
-  #diff .lbl { font-size:1em; opacity:.85; margin-bottom:8px; }
+  #gameSelect, #diff { text-align:center; }
+  #gameSelect .lbl, #diff .lbl { font-size:1em; opacity:.85; margin-bottom:8px; }
   .diffBtns { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
   .diffBtn {
     font-family: inherit; font-size: .95em; font-weight: bold;
@@ -113,33 +131,78 @@
   #startBtn:active { transform: translateY(3px); box-shadow:0 3px 0 rgba(0,0,0,.3); }
   #msg { font-size:1.4em; text-align:center; min-height:1.4em; font-weight:bold; }
 
-  /* ---- pravá část: rampa s raketou ---- */
+  /* ---- pravá část: dráha s vozidlem ---- */
   .launchpad {
     position: relative;
     width: 200px;
-    border-left: 3px dashed rgba(255,255,255,.25);
+    border-left: 3px dashed var(--panelBorder);
     background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(255,255,255,.05) 100%);
   }
-  #planet {
+  #topIcon {
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
     font-size: 70px;
     filter: drop-shadow(0 0 14px rgba(255,200,120,.7));
+    z-index: 2;
   }
   .ground {
     position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
-    background: linear-gradient(180deg, #4b3a2a, #6b4f37);
-    border-top: 4px solid #8b6f47;
+    background: var(--groundGrad);
+    border-top: 4px solid var(--groundBorder);
+    z-index: 2;
   }
   .ramp {
     position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%);
     font-size: 30px;
+    z-index: 2;
   }
-  /* trasa rakety: 0% dole nad rampou, 100% u planety */
+  body.theme-coconut .ramp {
+    font-size: 54px;
+    filter: drop-shadow(0 0 10px rgba(255,30,30,.75)) saturate(1.5) brightness(1.05);
+    animation: prowl 1.2s ease-in-out infinite;
+  }
+  @keyframes prowl {
+    0%,100% { transform: translateX(-50%) scale(1) rotate(-3deg); }
+    50%     { transform: translateX(-50%) scale(1.1) rotate(3deg); }
+  }
+  #angerMark {
+    display: none;
+    position: absolute; bottom: 100px; left: 68%;
+    font-size: 22px; z-index: 3;
+    animation: angerPulse .9s ease-in-out infinite;
+  }
+  body.theme-coconut #angerMark { display: block; }
+  @keyframes angerPulse {
+    0%,100% { transform: scale(1) rotate(0deg); opacity: .85; }
+    50%     { transform: scale(1.35) rotate(12deg); opacity: 1; }
+  }
+
+  /* vysoký kmen palmy od země až nahoru (jen kokosové téma) */
+  #trunk {
+    display: none;
+    position: absolute;
+    top: 74px; bottom: 60px; left: 50%; transform: translateX(-50%);
+    width: 26px;
+    clip-path: polygon(38% 0%, 62% 0%, 84% 100%, 16% 100%);
+    background: repeating-linear-gradient(180deg, #9a6a35 0px, #9a6a35 10px, #7a4f26 10px, #7a4f26 20px);
+    box-shadow: inset -4px 0 6px rgba(0,0,0,.35), inset 4px 0 6px rgba(255,255,255,.15);
+    z-index: 0;
+  }
+  body.theme-coconut #trunk { display: block; }
+  #coconutCluster {
+    display: none;
+    position: absolute;
+    top: 68px; left: 50%; transform: translateX(-50%);
+    font-size: 22px; letter-spacing: 6px;
+    z-index: 1;
+  }
+  body.theme-coconut #coconutCluster { display: block; }
+  /* trasa vozidla: 0% dole nad rampou, 100% u cíle */
   #rocketZone {
     position: absolute;
     left: 0; right: 0;
     bottom: 70px;   /* 0% pozice */
     top: 90px;      /* 100% pozice */
+    z-index: 2;
   }
   #rocket {
     position: absolute;
@@ -149,12 +212,24 @@
     font-size: 52px;
     transition: bottom .15s linear;
   }
+  body.theme-coconut #rocket { transform: translateX(-50%) rotate(0deg); }
   /* ukazatel procent */
   #pct {
     position:absolute; top:50%; right:8px; transform:translateY(-50%) rotate(0deg);
     font-size:1.1em; color:#fbbf24; font-weight:bold;
     text-shadow:0 1px 3px #000;
   }
+
+  #flyingCoconut {
+    position: absolute;
+    left: 50%;
+    top: 90px;
+    transform: translateX(-50%);
+    font-size: 34px;
+    z-index: 20;
+    transition: top .6s cubic-bezier(.6,-0.1,.9,.4);
+  }
+  #flyingCoconut.fly { top: calc(100% - 120px); }
 
   .confetti {
     position: fixed; top:-20px; font-size:24px; pointer-events:none;
@@ -163,11 +238,11 @@
   @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity:.9; } }
 </style>
 </head>
-<body>
+<body class="theme-space">
 <div class="starbg"></div>
 <div class="wrap">
   <div class="game">
-    <h1>🚀 Dolet raketou k planetě! 🪐</h1>
+    <h1 id="gameTitle">🚀 Doleť raketou k planetě! 🪐</h1>
     <div id="example">Připraven?</div>
     <input id="answer" type="number" inputmode="numeric" autocomplete="off" disabled>
     <div class="stats">
@@ -175,6 +250,10 @@
       <span>📈 Výška: <b id="height">0</b>%</span>
     </div>
     <div id="msg"></div>
+    <div id="gameSelect">
+      <div class="lbl">Hra:</div>
+      <div class="diffBtns" id="gameBtns"></div>
+    </div>
     <div id="diff">
       <div class="lbl">Obtížnost:</div>
       <div class="diffBtns" id="diffBtns"></div>
@@ -182,39 +261,89 @@
     <button id="startBtn">▶️ START</button>
   </div>
 
-  <div class="launchpad">
-    <div id="planet">🪐</div>
+  <div class="launchpad" id="launchpad">
+    <div id="topIcon">🪐</div>
+    <div id="trunk"></div>
+    <div id="coconutCluster">🥥🥥</div>
     <div id="pct">0%</div>
     <div id="rocketZone">
       <div id="rocket">🚀</div>
     </div>
-    <div class="ramp">🗼</div>
+    <div class="ramp" id="rampIcon">🗼</div>
+    <div id="angerMark">💢</div>
     <div class="ground"></div>
   </div>
 </div>
 
 <script>
-const DIFFICULTIES = [
-  { name: '🎈 Balónek',          drop: 0.5 },
-  { name: '🧑‍🚀 Kadet',      drop: 1.0 },
-  { name: '🚀 Pilot',            drop: 1.5 },
-  { name: '☄️ Velitel',          drop: 2.25 },
-  { name: '👽 Hvězdný kapitán',  drop: 3.0 },
+const THEMES = [
+  {
+    key: 'space',
+    label: '🚀 Vesmírné násobení',
+    title: '🚀 Doleť raketou k planetě! 🪐',
+    bodyClass: 'theme-space',
+    topIcon: '🪐',
+    vehicle: '🚀',
+    rampIcon: '🗼',
+    mathMode: 'big',
+    winBanner: '🌟 BINGO! 🌟',
+    loseBanner: '💥 BUM! 💥',
+    winMsg: t => 'Dolétl jsi k planetě! Skvělá práce! 🎉 Tvůj čas: ' + t,
+    loseMsg: 'Raketa spadla na zem a vybuchla. Zkus to znovu! 🚀',
+    confettiSet: ['🎉','⭐','🚀','🌟','🎊','💫','🪐','✨'],
+    difficulties: [
+      { name: '🎈 Balónek',          drop: 0.5 },
+      { name: '🧑‍🚀 Kadet',      drop: 1.0 },
+      { name: '🚀 Pilot',            drop: 1.5 },
+      { name: '☄️ Velitel',          drop: 2.25 },
+      { name: '👽 Hvězdný kapitán',  drop: 3.0 },
+    ],
+  },
+  {
+    key: 'coconut',
+    label: '🥥 Kokosová násobilka',
+    title: '🐒 Utíkej opičko pro kokos! 🥥',
+    bodyClass: 'theme-coconut',
+    topIcon: '🌴',
+    vehicle: '🐒',
+    rampIcon: '🐅',
+    mathMode: 'small',
+    winBanner: '🥥 HURÁ! 🥥',
+    loseBanner: '😱 ÁÁÁ! 😱',
+    winMsg: t => 'Opička vyšplhala na vrchol, utrhla kokos a hodila ho po tygrovi! 🎉 Tvůj čas: ' + t,
+    loseMsg: 'Ouha, tygr sežral opičku! Zkus to znovu! 🐒',
+    confettiSet: ['🥥','🌴','🐒','⭐','🎉','🍌','✨'],
+    difficulties: [
+      { name: '🐒 Nováček džungle', drop: 1.0 },
+      { name: '🌴 Šplhoun',         drop: 2.0 },
+      { name: '🥥 Sběrač kokosů',   drop: 3.0 },
+      { name: '🐅 Krotitel tygrů',  drop: 4.5 },
+      { name: '👑 Král džungle',    drop: 6.0 },
+    ],
+  },
 ];
-let diffIndex = 2;        // výchozí: Pilot
-let DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;  // % dolů každou sekundu
+let themeIndex = 0;
+let currentTheme = THEMES[themeIndex];
+
+let diffIndex = 2;        // výchozí: prostřední úroveň
+let DROP_PER_SEC = THEMES[themeIndex].difficulties[diffIndex].drop;  // % dolů každou sekundu
 const UP_CORRECT = 15;    // % nahoru za správně
 const DOWN_WRONG = 10;    // % dolů za špatně
 const START_POS = 12;     // startovní výška po odpálení
 
+const gameTitleEl = document.getElementById('gameTitle');
 const exampleEl = document.getElementById('example');
 const answerEl  = document.getElementById('answer');
 const timeEl    = document.getElementById('time');
 const heightEl  = document.getElementById('height');
 const msgEl     = document.getElementById('msg');
 const startBtn  = document.getElementById('startBtn');
+const launchpadEl = document.getElementById('launchpad');
+const topIconEl = document.getElementById('topIcon');
 const rocketEl  = document.getElementById('rocket');
+const rampIconEl = document.getElementById('rampIcon');
 const pctEl     = document.getElementById('pct');
+const gameBtns  = document.getElementById('gameBtns');
 const diffBtns  = document.getElementById('diffBtns');
 
 let pos = 0;          // % výška 0..100
@@ -223,15 +352,138 @@ let curAnswer = 0;
 let tickId = null;
 let playing = false;
 
+// ---- zvuky (syntetizované, bez souborů) ----
+let audioCtx = null;
+let heartbeatTimer = null;
+
+function ensureAudio(){
+  if (!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function tone(freq, start, dur, type, gain, freqEnd){
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, start);
+  if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,1), start+dur);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(Math.max(gain,0.0002), start+0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(start);
+  osc.stop(start+dur+0.02);
+}
+
+function noiseBurst(start, dur, gain, filterStart, filterEnd, filterType){
+  const n = Math.max(1, Math.floor(audioCtx.sampleRate*dur));
+  const buffer = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i=0;i<n;i++) data[i] = Math.random()*2-1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = filterType || 'lowpass';
+  filter.frequency.setValueAtTime(filterStart, start);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(filterEnd,20), start+dur);
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(gain, start);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  src.connect(filter).connect(g).connect(audioCtx.destination);
+  src.start(start);
+  src.stop(start+dur+0.02);
+}
+
+function playHeartbeat(danger){
+  const t = audioCtx.currentTime;
+  const vol = 0.05 + danger*0.28;
+  tone(58, t, 0.09, 'sine', vol);
+  tone(46, t+0.13, 0.11, 'sine', vol*0.7);
+}
+
+function startHeartbeat(){
+  stopHeartbeat();
+  heartbeatTick();
+}
+
+function stopHeartbeat(){
+  if (heartbeatTimer){ clearTimeout(heartbeatTimer); heartbeatTimer = null; }
+}
+
+function heartbeatTick(){
+  if (!playing) return;
+  const danger = 1 - Math.min(1, Math.max(0, pos/100));   // 0 = bezpečno, 1 = u tygra
+  playHeartbeat(danger);
+  const bpm = 55 + danger*130;
+  heartbeatTimer = setTimeout(heartbeatTick, 60000/bpm);
+}
+
+function playThrowSound(){
+  noiseBurst(audioCtx.currentTime, 0.32, 0.28, 3200, 500, 'bandpass');
+}
+
+function playTigerDeath(){
+  const t = audioCtx.currentTime;
+  tone(480, t, 0.5, 'sawtooth', 0.22, 110);
+  noiseBurst(t, 0.3, 0.15, 900, 100, 'lowpass');
+}
+
+function playTigerAttack(){
+  const t = audioCtx.currentTime;
+  tone(130, t, 0.4, 'sawtooth', 0.32, 55);
+  noiseBurst(t, 0.45, 0.35, 2200, 150, 'lowpass');
+}
+
+function playWinFanfare(){
+  const t = audioCtx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5];   // C5 E5 G5 C6
+  notes.forEach((f,i) => tone(f, t + i*0.12, 0.22, 'triangle', 0.22));
+}
+
+function playExplosion(){
+  const t = audioCtx.currentTime;
+  noiseBurst(t, 0.5, 0.35, 1600, 80, 'lowpass');
+  tone(90, t, 0.35, 'sawtooth', 0.25, 35);
+}
+
+function playCorrect(){
+  const t = audioCtx.currentTime;
+  tone(659.25, t, 0.1, 'triangle', 0.22);
+  tone(987.77, t+0.09, 0.14, 'triangle', 0.22);
+}
+
+function playWrong(){
+  const t = audioCtx.currentTime;
+  tone(220, t, 0.22, 'square', 0.18, 110);
+}
+
 function fmtTime(tenths){
   return (tenths / 10).toFixed(1).replace('.', ',') + ' s';
 }
 
 function rnd(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
+function renderGameBtns(){
+  gameBtns.innerHTML = '';
+  THEMES.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = 'diffBtn' + (i===themeIndex ? ' sel' : '') + (playing ? ' locked' : '');
+    b.textContent = t.label;
+    b.disabled = playing;
+    b.addEventListener('click', () => {
+      if (playing) return;
+      themeIndex = i;
+      applyTheme();
+    });
+    gameBtns.appendChild(b);
+  });
+}
+
 function renderDiff(){
   diffBtns.innerHTML = '';
-  DIFFICULTIES.forEach((d, i) => {
+  currentTheme.difficulties.forEach((d, i) => {
     const b = document.createElement('button');
     b.className = 'diffBtn' + (i===diffIndex ? ' sel' : '') + (playing ? ' locked' : '');
     b.textContent = d.name;
@@ -245,7 +497,21 @@ function renderDiff(){
     diffBtns.appendChild(b);
   });
 }
-renderDiff();
+
+function applyTheme(){
+  currentTheme = THEMES[themeIndex];
+  document.body.className = currentTheme.bodyClass;
+  gameTitleEl.textContent = currentTheme.title;
+  topIconEl.textContent = currentTheme.topIcon;
+  rampIconEl.textContent = currentTheme.rampIcon;
+  rocketEl.textContent = currentTheme.vehicle;
+  rocketEl.style.visibility = '';
+  DROP_PER_SEC = currentTheme.difficulties[diffIndex].drop;
+  if (!playing) setPos(START_POS);
+  renderGameBtns();
+  renderDiff();
+}
+applyTheme();
 
 function setPos(p){
   pos = Math.max(-1, Math.min(100, p));
@@ -255,10 +521,24 @@ function setPos(p){
   pctEl.textContent = shown + '%';
 }
 
+let solvedExamples = new Set();  // klíče příkladů už správně zodpovězených v této hře
+let curKey = '';
+
 function newExample(){
-  const a = rnd(2,9);
-  const b = rnd(10,20);
-  const [x,y] = Math.random()<0.5 ? [a,b] : [b,a];
+  let x, y, key;
+  let attempts = 0;
+  do {
+    if (currentTheme.mathMode === 'small'){
+      x = rnd(1,10); y = rnd(1,10);
+    } else {
+      const a = rnd(2,9); const b = rnd(10,20);
+      [x,y] = Math.random()<0.5 ? [a,b] : [b,a];
+    }
+    key = Math.min(x,y) + 'x' + Math.max(x,y);
+    attempts++;
+  } while (solvedExamples.has(key) && attempts < 300);
+  if (solvedExamples.has(key)) solvedExamples.clear();  // všechny kombinace vyčerpány, začni znovu
+  curKey = key;
   curAnswer = x*y;
   exampleEl.textContent = x + ' × ' + y;
   answerEl.value = '';
@@ -266,16 +546,23 @@ function newExample(){
 }
 
 function startGame(){
+  ensureAudio();
   playing = true;
   elapsed = 0; timeEl.textContent = fmtTime(0);
   msgEl.textContent = '';
   startBtn.style.display = 'none';
   answerEl.disabled = false;
-  renderDiff();   // zamknout přepínání obtížnosti
-  setPos(START_POS);           // odpálení z rampy
+  rocketEl.style.visibility = '';
+  rocketEl.textContent = currentTheme.vehicle;
+  rampIconEl.textContent = currentTheme.rampIcon;
+  renderGameBtns(); // zamknout přepínání hry
+  renderDiff();     // zamknout přepínání obtížnosti
+  setPos(START_POS);           // start z dráhy
+  solvedExamples.clear();
   newExample();
   if (tickId) clearInterval(tickId);
   tickId = setInterval(tick, 100);   // 10× za sekundu
+  if (currentTheme.key === 'coconut') startHeartbeat();
 }
 
 function tick(){
@@ -283,7 +570,7 @@ function tick(){
   // čas běží
   elapsed++;
   timeEl.textContent = fmtTime(elapsed);
-  // raketa klesá plynule (DROP_PER_SEC % za sekundu)
+  // vozidlo klesá plynule (DROP_PER_SEC % za sekundu)
   setPos(pos - DROP_PER_SEC / 10);
   checkEnd();
 }
@@ -293,11 +580,14 @@ function submit(){
   const val = answerEl.value.trim();
   if (val === '') return;
   if (parseInt(val,10) === curAnswer){
+    playCorrect();
+    solvedExamples.add(curKey);
     setPos(pos + UP_CORRECT);
-    flash('🚀 +' + UP_CORRECT + '%', '#34d399');
+    flash('⬆️ +' + UP_CORRECT + '%', '#34d399');
     if (checkEnd()) return;
     newExample();
   } else {
+    playWrong();
     setPos(pos - DOWN_WRONG);
     flash('💥 Špatně! -' + DOWN_WRONG + '%', '#ef4444');
     answerEl.classList.remove('shake'); void answerEl.offsetWidth;
@@ -321,34 +611,67 @@ function checkEnd(){
 function stop(){
   playing = false;
   clearInterval(tickId);
+  stopHeartbeat();
   answerEl.disabled = true;
   startBtn.style.display = '';
-  renderDiff();   // znovu povolit přepínání obtížnosti
+  renderGameBtns(); // znovu povolit přepínání hry
+  renderDiff();     // znovu povolit přepínání obtížnosti
 }
 
 function win(){
   stop();
   setPos(100);
-  rocketEl.textContent = '🚀';
-  exampleEl.textContent = '🌟 BINGO! 🌟';
+  rocketEl.textContent = currentTheme.vehicle;
+  exampleEl.textContent = currentTheme.winBanner;
   msgEl.style.color = '#34d399';
-  msgEl.textContent = 'Dolétl jsi k planetě! Skvělá práce! 🎉 Tvůj čas: ' + fmtTime(elapsed);
+  msgEl.textContent = currentTheme.winMsg(fmtTime(elapsed));
   startBtn.textContent = '▶️ Hrát znovu';
-  celebrate();
+  if (currentTheme.key === 'coconut'){
+    throwCoconut();
+  } else {
+    playWinFanfare();
+    celebrate();
+  }
+}
+
+function throwCoconut(){
+  playThrowSound();
+  const coconut = document.createElement('div');
+  coconut.id = 'flyingCoconut';
+  coconut.textContent = '🥥';
+  launchpadEl.appendChild(coconut);
+  requestAnimationFrame(() => coconut.classList.add('fly'));
+  setTimeout(() => {
+    rampIconEl.textContent = '😵';
+    coconut.remove();
+    playTigerDeath();
+    celebrate();
+  }, 650);
 }
 
 function boom(){
   stop();
-  rocketEl.textContent = '💥';
-  exampleEl.textContent = '💥 BUM! 💥';
+  if (currentTheme.key === 'coconut'){
+    playTigerAttack();
+    rocketEl.textContent = '😱';
+    setTimeout(() => { rocketEl.style.visibility = 'hidden'; }, 300);
+  } else {
+    playExplosion();
+    rocketEl.textContent = '💥';
+  }
+  exampleEl.textContent = currentTheme.loseBanner;
   msgEl.style.color = '#ef4444';
-  msgEl.textContent = 'Raketa spadla na zem a vybuchla. Zkus to znovu! 🚀';
+  msgEl.textContent = currentTheme.loseMsg;
   startBtn.textContent = '▶️ Zkusit znovu';
-  setTimeout(()=>{ rocketEl.textContent = '🚀'; }, 1500);
+  setTimeout(()=>{
+    rocketEl.textContent = currentTheme.vehicle;
+    rocketEl.style.visibility = '';
+    rampIconEl.textContent = currentTheme.rampIcon;
+  }, 1500);
 }
 
 function celebrate(){
-  const e = ['🎉','⭐','🚀','🌟','🎊','💫','🪐','✨'];
+  const e = currentTheme.confettiSet;
   for (let i=0;i<70;i++){
     const c=document.createElement('div');
     c.className='confetti'; c.textContent=e[Math.floor(Math.random()*e.length)];
@@ -363,18 +686,26 @@ function celebrate(){
 answerEl.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
 startBtn.addEventListener('click', startGame);
 
-// ovládání klávesnicí před startem: šipky = obtížnost, Enter = start
+// ovládání klávesnicí před startem: šipky nahoru/dolů = hra, šipky vlevo/vpravo = obtížnost, Enter = start
 document.addEventListener('keydown', e=>{
   if (playing) return;
   if (e.target === answerEl) return;  // Enter z políčka odpovědi neřešíme (ukončil hru)
-  if (e.key === 'ArrowLeft'){
-    diffIndex = (diffIndex - 1 + DIFFICULTIES.length) % DIFFICULTIES.length;
-    DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;
+  if (e.key === 'ArrowUp'){
+    themeIndex = (themeIndex - 1 + THEMES.length) % THEMES.length;
+    applyTheme();
+    e.preventDefault();
+  } else if (e.key === 'ArrowDown'){
+    themeIndex = (themeIndex + 1) % THEMES.length;
+    applyTheme();
+    e.preventDefault();
+  } else if (e.key === 'ArrowLeft'){
+    diffIndex = (diffIndex - 1 + currentTheme.difficulties.length) % currentTheme.difficulties.length;
+    DROP_PER_SEC = currentTheme.difficulties[diffIndex].drop;
     renderDiff();
     e.preventDefault();
   } else if (e.key === 'ArrowRight'){
-    diffIndex = (diffIndex + 1) % DIFFICULTIES.length;
-    DROP_PER_SEC = DIFFICULTIES[diffIndex].drop;
+    diffIndex = (diffIndex + 1) % currentTheme.difficulties.length;
+    DROP_PER_SEC = currentTheme.difficulties[diffIndex].drop;
     renderDiff();
     e.preventDefault();
   } else if (e.key === 'Enter'){
