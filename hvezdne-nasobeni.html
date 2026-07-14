@@ -642,7 +642,7 @@ function newExample(){
   let attempts = 0;
   do {
     if (currentTheme.mathMode === 'small'){
-      x = rnd(1,10); y = rnd(1,10);
+      x = rnd(2,9); y = rnd(2,9);
     } else {
       const a = rnd(2,9); const b = rnd(10,20);
       [x,y] = Math.random()<0.5 ? [a,b] : [b,a];
