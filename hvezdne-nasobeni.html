@@ -238,16 +238,27 @@
   }
   @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity:.9; } }
 
-  /* ---- mobilní režim: dotyková klávesnice, žádný focus, menší dráha ---- */
-  #mobileToggle {
+  /* ---- horní lišta: mobil/pc přepínač + jméno hráče + odkaz na tabulku hráčů ---- */
+  #topBar {
     position: fixed; top: 8px; left: 8px; z-index: 100;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  body.playing #topBar { display: none; }
+  .topBarBtn {
     font-family: inherit; font-size: 1.1em;
     padding: 6px 10px; border-radius: 10px; border: none; cursor: pointer;
     color: #fff; background: rgba(255,255,255,.15);
   }
-  #mobileToggle:hover { background: rgba(255,255,255,.28); }
+  .topBarBtn:hover { background: rgba(255,255,255,.28); }
   #mobileToggle.on { background: rgba(52,211,153,.4); }
-  body.playing #mobileToggle { display: none; }
+  #playerBadge {
+    font-family: inherit; font-size: .95em;
+    padding: 6px 10px; border-radius: 10px;
+    background: rgba(255,255,255,.12);
+    white-space: nowrap; max-width: 40vw; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ---- mobilní režim: dotyková klávesnice, žádný focus, menší dráha ---- */
 
   #keypad {
     display: none;
@@ -292,10 +303,55 @@
   body.mobile-ui #coconutCluster { font-size: 11px; letter-spacing: 2px; top: 38px; }
   body.mobile-ui #angerMark { font-size: 13px; bottom: 72px; }
   body.mobile-ui #flyingCoconut { font-size: 18px; }
+
+  /* ---- modal: tabulka hráčů ---- */
+  .modalOverlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.6);
+    align-items: center; justify-content: center;
+  }
+  .modalOverlay.open { display: flex; }
+  .modalPanel {
+    position: relative;
+    background: var(--bg);
+    border: 3px solid var(--panelBorder);
+    border-radius: 20px;
+    padding: 24px 28px;
+    max-width: 520px; width: 90vw; max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    color: #fff;
+  }
+  .modalPanel h2 { margin-top: 0; text-align: center; }
+  .modalClose {
+    position: absolute; top: 10px; right: 14px;
+    background: none; border: none; color: #fff; font-size: 1.3em; cursor: pointer;
+  }
+  .playerRow {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-bottom: 8px; cursor: pointer; text-align: left; width: 100%;
+  }
+  .playerRowName { font-weight: bold; }
+  .playerRowMeta { opacity: .7; font-size: .85em; }
+  .playerHistoryBtn { background: none; border: none; font-size: 1.1em; cursor: pointer; color: #fff; }
+  .addPlayerRow { display: flex; gap: 8px; margin-top: 14px; }
+  #newPlayerName {
+    flex: 1;
+    font-family: inherit; font-size: 1em;
+    padding: 8px 10px; border-radius: 10px; border: 2px solid var(--accent2);
+    background: #fff; color: #1e293b;
+  }
+  #historyTable { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .9em; }
+  #historyTable th, #historyTable td { padding: 6px 8px; border-bottom: 1px solid var(--panelBorder); text-align: center; }
+  #emptyPlayersMsg { opacity: .8; text-align: center; margin: 12px 0; }
 </style>
 </head>
 <body class="theme-space">
-<button id="mobileToggle">📱</button>
+<div id="topBar">
+  <button id="mobileToggle" class="topBarBtn">📱</button>
+  <div id="playerBadge">👤 <span id="playerNameLabel">— vyber hráče —</span></div>
+  <button id="playersBtn" class="topBarBtn" title="Žebříček hráčů">🏆</button>
+</div>
 <div class="starbg"></div>
 <div class="wrap">
   <div class="game">
@@ -344,6 +400,31 @@
       <div class="ramp" id="rampIcon">🗼</div>
       <div id="angerMark">💢</div>
       <div class="ground"></div>
+    </div>
+  </div>
+</div>
+
+<div id="playersModal" class="modalOverlay">
+  <div class="modalPanel">
+    <button id="playersModalClose" class="modalClose">✖</button>
+    <h2>🏆 Hráči</h2>
+
+    <div id="playersListView">
+      <div id="playersList"></div>
+      <div id="emptyPlayersMsg" style="display:none">Zatím žádní hráči — přidej prvního!</div>
+      <div class="addPlayerRow">
+        <input id="newPlayerName" type="text" maxlength="20" placeholder="Jméno nového hráče">
+        <button id="addPlayerBtn" class="diffBtn">➕ Přidat hráče</button>
+      </div>
+    </div>
+
+    <div id="playerHistoryView" style="display:none">
+      <button id="backToListBtn" class="diffBtn">⬅️ Zpět</button>
+      <h3 id="historyPlayerName"></h3>
+      <table id="historyTable">
+        <thead><tr><th>Datum</th><th>Hra</th><th>Obtížnost</th><th>Výsledek</th><th>Čas</th><th>✔️/❌</th></tr></thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -420,12 +501,219 @@ const gameBtns  = document.getElementById('gameBtns');
 const diffBtns  = document.getElementById('diffBtns');
 const keypadEl  = document.getElementById('keypad');
 const mobileToggleBtn = document.getElementById('mobileToggle');
+const playerNameLabelEl = document.getElementById('playerNameLabel');
+const playersBtn = document.getElementById('playersBtn');
+const playersModal = document.getElementById('playersModal');
+const playersModalClose = document.getElementById('playersModalClose');
+const playersListView = document.getElementById('playersListView');
+const playersListEl = document.getElementById('playersList');
+const emptyPlayersMsgEl = document.getElementById('emptyPlayersMsg');
+const newPlayerNameEl = document.getElementById('newPlayerName');
+const addPlayerBtn = document.getElementById('addPlayerBtn');
+const playerHistoryView = document.getElementById('playerHistoryView');
+const backToListBtn = document.getElementById('backToListBtn');
+const historyPlayerNameEl = document.getElementById('historyPlayerName');
+const historyTbodyEl = document.getElementById('historyTbody');
 
 let pos = 0;          // % výška 0..100
 let elapsed = 0;      // celkový čas hry v desetinách sekundy
 let curAnswer = 0;
 let tickId = null;
 let playing = false;
+let gameCorrect = 0, gameWrong = 0;   // čítače odpovědí v aktuální hře
+
+// ---- hráči a jejich historie (localStorage) ----
+const LS_PLAYERS_KEY = 'nasobilka_players_v1';
+const LS_CURRENT_KEY = 'nasobilka_currentPlayer_v1';
+const MAX_PLAYERS = 20;
+const MAX_HISTORY = 50;
+
+function loadPlayers(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_PLAYERS_KEY));
+    return Array.isArray(raw) ? raw : [];
+  } catch (e){
+    return [];
+  }
+}
+function savePlayers(list){
+  localStorage.setItem(LS_PLAYERS_KEY, JSON.stringify(list));
+}
+
+let players = loadPlayers();
+let currentPlayerName = localStorage.getItem(LS_CURRENT_KEY) || null;
+
+function touchPlayer(name){
+  name = name.trim();
+  const idx = players.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+  let player;
+  if (idx === -1){
+    player = { name, history: [] };
+    players.unshift(player);
+    if (players.length > MAX_PLAYERS) players.length = MAX_PLAYERS;
+  } else {
+    player = players[idx];
+    players.splice(idx, 1);
+    players.unshift(player);
+  }
+  savePlayers(players);
+  return player;
+}
+
+function setCurrentPlayer(name){
+  touchPlayer(name);
+  currentPlayerName = name.trim();
+  localStorage.setItem(LS_CURRENT_KEY, currentPlayerName);
+  renderPlayerBadge();
+}
+
+function renderPlayerBadge(){
+  playerNameLabelEl.textContent = currentPlayerName || '— vyber hráče —';
+}
+
+let currentGameEntry = null;   // záznam rozehrané hry, uložený hned na startu a doplněný na konci
+
+function recordGameStart(){
+  if (!currentPlayerName) return;
+  const entry = {
+    ts: new Date().toISOString(),
+    themeLabel: currentTheme.label,
+    diffName: currentTheme.difficulties[diffIndex].name,
+    result: 'inprogress',
+    time: '',
+    correct: 0,
+    wrong: 0,
+  };
+  const player = touchPlayer(currentPlayerName);
+  player.history.unshift(entry);
+  if (player.history.length > MAX_HISTORY) player.history.length = MAX_HISTORY;
+  savePlayers(players);
+  currentGameEntry = entry;
+}
+
+function recordGameResult(result){
+  if (!currentPlayerName) return;
+  if (!currentGameEntry){
+    // záznam startu chybí (obranná pojistka) — vytvoř ho rovnou i s výsledkem
+    recordGameStart();
+  }
+  currentGameEntry.result = result;
+  currentGameEntry.time = fmtTime(elapsed);
+  currentGameEntry.correct = gameCorrect;
+  currentGameEntry.wrong = gameWrong;
+  savePlayers(players);
+  currentGameEntry = null;
+}
+
+function renderPlayersList(){
+  playersListEl.innerHTML = '';
+  emptyPlayersMsgEl.style.display = players.length === 0 ? '' : 'none';
+  players.forEach(p => {
+    const wins = p.history.filter(h => h.result === 'win').length;
+    const row = document.createElement('div');
+    row.className = 'playerRow diffBtn' + (p.name === currentPlayerName ? ' sel' : '');
+    row.innerHTML =
+      '<span class="playerRowName"></span>' +
+      '<span class="playerRowMeta"></span>' +
+      '<button class="playerHistoryBtn" title="Historie her">📜</button>';
+    row.querySelector('.playerRowName').textContent = p.name;
+    row.querySelector('.playerRowMeta').textContent = p.history.length + ' her, ' + wins + ' výher';
+    row.querySelector('.playerHistoryBtn').addEventListener('click', ev => {
+      ev.stopPropagation();
+      showPlayerHistory(p.name);
+    });
+    row.addEventListener('click', () => {
+      setCurrentPlayer(p.name);
+      closePlayersModal();
+    });
+    playersListEl.appendChild(row);
+  });
+}
+
+function addPlayer(){
+  const name = newPlayerNameEl.value.trim();
+  if (!name) return;
+  setCurrentPlayer(name);
+  newPlayerNameEl.value = '';
+  closePlayersModal();
+}
+
+function formatRelativeTime(ts){
+  const then = new Date(ts).getTime();
+  const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (diffSec < 5) return 'právě teď';
+  if (diffSec < 60) return 'před ' + diffSec + ' s';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return 'před ' + diffMin + ' min';
+  const diffHod = Math.floor(diffMin / 60);
+  if (diffHod < 24) return 'před ' + diffHod + ' h';
+  const diffDny = Math.floor(diffHod / 24);
+  if (diffDny === 1) return 'včera';
+  if (diffDny < 7) return 'před ' + diffDny + ' dny';
+  const diffTyd = Math.floor(diffDny / 7);
+  if (diffTyd < 5) return 'před ' + diffTyd + ' týd.';
+  return new Date(ts).toLocaleDateString('cs-CZ');
+}
+
+function showPlayerHistory(name){
+  const player = players.find(p => p.name === name);
+  if (!player) return;
+  playersListView.style.display = 'none';
+  playerHistoryView.style.display = '';
+  historyPlayerNameEl.textContent = name;
+  historyTbodyEl.innerHTML = '';
+  player.history.forEach(h => {
+    const tr = document.createElement('tr');
+    const dateTd = document.createElement('td');
+    dateTd.textContent = formatRelativeTime(h.ts);
+    dateTd.title = new Date(h.ts).toLocaleString('cs-CZ');
+    tr.appendChild(dateTd);
+    const cells = [
+      h.themeLabel,
+      h.diffName,
+      h.result === 'win' ? '🏆 výhra' : h.result === 'lose' ? '💥 prohra' : '⏳ nedokončeno',
+      h.time,
+      h.correct + ' / ' + h.wrong,
+    ];
+    cells.forEach(c => {
+      const td = document.createElement('td');
+      td.textContent = c;
+      tr.appendChild(td);
+    });
+    historyTbodyEl.appendChild(tr);
+  });
+}
+
+function backToPlayersList(){
+  playerHistoryView.style.display = 'none';
+  playersListView.style.display = '';
+}
+
+function openPlayersModal(){
+  if (playing) return;
+  playersListView.style.display = '';
+  playerHistoryView.style.display = 'none';
+  renderPlayersList();
+  playersModal.classList.add('open');
+  newPlayerNameEl.focus();
+}
+
+function closePlayersModal(){
+  playersModal.classList.remove('open');
+}
+
+playersBtn.addEventListener('click', openPlayersModal);
+playersModalClose.addEventListener('click', closePlayersModal);
+playersModal.addEventListener('click', e => { if (e.target === playersModal) closePlayersModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && playersModal.classList.contains('open')) closePlayersModal();
+});
+addPlayerBtn.addEventListener('click', addPlayer);
+newPlayerNameEl.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.stopPropagation(); addPlayer(); } });
+backToListBtn.addEventListener('click', backToPlayersList);
+
+renderPlayerBadge();
+if (!currentPlayerName) openPlayersModal();
 
 // ---- mobilní režim: dotyková klávesnice místo systémové ----
 function detectMobile(){
@@ -659,10 +947,13 @@ function newExample(){
 }
 
 function startGame(){
+  if (!currentPlayerName){ openPlayersModal(); return; }
   ensureAudio();
   playing = true;
   document.body.classList.add('playing');
   elapsed = 0; timeEl.textContent = fmtTime(0);
+  gameCorrect = 0; gameWrong = 0;
+  recordGameStart();
   msgEl.textContent = '';
   startBtn.style.display = 'none';
   answerEl.disabled = false;
@@ -695,6 +986,7 @@ function submit(){
   if (val === '') return;
   if (parseInt(val,10) === curAnswer){
     playCorrect();
+    gameCorrect++;
     solvedExamples.add(curKey);
     setPos(pos + UP_CORRECT);
     flash('⬆️ +' + UP_CORRECT + '%', '#34d399');
@@ -702,6 +994,7 @@ function submit(){
     newExample();
   } else {
     playWrong();
+    gameWrong++;
     setPos(pos - DOWN_WRONG);
     flash('💥 Špatně! -' + DOWN_WRONG + '%', '#ef4444');
     answerEl.classList.remove('shake'); void answerEl.offsetWidth;
@@ -735,6 +1028,7 @@ function stop(){
 
 function win(){
   stop();
+  recordGameResult('win');
   setPos(100);
   rocketEl.textContent = currentTheme.vehicle;
   exampleEl.textContent = currentTheme.winBanner;
@@ -766,6 +1060,7 @@ function throwCoconut(){
 
 function boom(){
   stop();
+  recordGameResult('lose');
   if (currentTheme.key === 'coconut'){
     playTigerAttack();
     rocketEl.textContent = '😱';
@@ -805,6 +1100,7 @@ startBtn.addEventListener('click', startGame);
 document.addEventListener('keydown', e=>{
   if (playing) return;
   if (e.target === answerEl) return;  // Enter z políčka odpovědi neřešíme (ukončil hru)
+  if (playersModal.classList.contains('open')) return;  // modal hráčů má vlastní ovládání (Enter = přidat hráče)
   if (e.key === 'ArrowUp'){
     themeIndex = (themeIndex - 1 + THEMES.length) % THEMES.length;
     applyTheme();
